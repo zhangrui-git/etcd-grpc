@@ -1,0 +1,24 @@
+syntax = "proto3";
+option go_package = "../service/video";
+
+message InfoRequest {
+  uint32 Id = 1;
+}
+
+message InfoResponse {
+  uint32 Id = 1;
+  string Title = 2;
+  string Comment = 3;
+  uint32 Status = 4;
+}
+
+message PushRequest {
+  string Title = 1;
+  string Comment = 2;
+}
+
+service Video {
+  rpc Info(stream InfoRequest) returns (stream InfoResponse);
+  rpc Push(PushRequest) returns (InfoResponse);
+}
+// protoc --go_out=. --go-grpc_out=. *.proto
