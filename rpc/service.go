@@ -5,6 +5,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/naming/endpoints"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/resolver"
 	"log"
 	"time"
 )
@@ -12,11 +13,12 @@ import (
 type Service struct {
 	etcdAddr    []string
 	serviceAddr string
-	serviceDesc grpc.ServiceDesc
+	serviceDesc *grpc.ServiceDesc
 	ttl         int64
 	keepalive   int64
 	client      *clientv3.Client
-	manager     endpoints.Manager
+	manager     *endpoints.Manager
+	resolver    *resolver.Builder
 }
 
 type Option interface {
@@ -37,7 +39,7 @@ func WithServiceAddr(listen string) Option {
 	}}
 }
 
-func WithServiceDesc(desc grpc.ServiceDesc) Option {
+func WithServiceDesc(desc *grpc.ServiceDesc) Option {
 	return &funcOption{f: func(s *Service) {
 		s.serviceDesc = desc
 	}}
@@ -84,9 +86,15 @@ func (s *Service) etcdClient() {
 }
 
 func (s *Service) target() string {
+	if s.serviceDesc == nil {
+		log.Fatal("serviceDesc is nil")
+	}
 	return s.serviceDesc.ServiceName
 }
 
 func (s *Service) etcdKey() string {
+	if s.serviceDesc == nil {
+		log.Fatal("serviceDesc is nil")
+	}
 	return fmt.Sprintf("%s/%s", s.serviceDesc.ServiceName, s.serviceAddr)
 }

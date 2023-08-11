@@ -23,7 +23,7 @@ func (s *Service) Register() {
 		Addr:     s.serviceAddr,
 		Metadata: s.serviceDesc.Metadata,
 	}
-	err := s.manager.AddEndpoint(ctx, s.etcdKey(), ep, clientv3.WithLease(lease.ID))
+	err := (*s.manager).AddEndpoint(ctx, s.etcdKey(), ep, clientv3.WithLease(lease.ID))
 	if err != nil {
 		log.Fatal("服务添加失败", err)
 	}
@@ -50,7 +50,7 @@ func (s *Service) Unregister() {
 
 	ctx := context.Background()
 
-	err := s.manager.DeleteEndpoint(ctx, s.etcdKey())
+	err := (*s.manager).DeleteEndpoint(ctx, s.etcdKey())
 	if err != nil {
 		log.Fatal("服务移除失败", err)
 	}
@@ -62,6 +62,6 @@ func (s *Service) etcdManager() {
 		if err != nil {
 			log.Fatal("manager创建失败", err)
 		}
-		s.manager = manager
+		s.manager = &manager
 	}
 }

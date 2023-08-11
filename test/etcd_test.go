@@ -60,7 +60,7 @@ func TestReg(t *testing.T) {
 }
 
 func TestDis(t *testing.T) {
-	service := rpc.NewService([]string{"127.0.0.1:12379"}, rpc.WithServiceDesc(video.Video_ServiceDesc))
+	service := rpc.NewService([]string{"127.0.0.1:12379"}, rpc.WithServiceDesc(&video.Video_ServiceDesc))
 	conn := service.Discovery()
 
 	req := &video.PushRequest{Title: "banana", Comment: "banana"}

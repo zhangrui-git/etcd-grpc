@@ -18,7 +18,7 @@ func main() {
 	svc := rpc.NewService(
 		[]string{*etcd},
 		rpc.WithServiceAddr(*listen),
-		rpc.WithServiceDesc(video.Video_ServiceDesc),
+		rpc.WithServiceDesc(&video.Video_ServiceDesc),
 		rpc.WithTTL(3),
 		rpc.WithKeepalive(2),
 	)

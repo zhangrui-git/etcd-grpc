@@ -10,15 +10,11 @@ import (
 
 func (s *Service) Discovery() *grpc.ClientConn {
 	s.etcdClient()
-
-	builder, resolverErr := resolver.NewBuilder(s.client)
-	if resolverErr != nil {
-		log.Fatal(resolverErr)
-	}
+	s.etcdResolver()
 
 	conn, dialErr := grpc.Dial(
 		fmt.Sprintf("etcd:///%s", s.target()),
-		grpc.WithResolvers(builder),
+		grpc.WithResolvers(*s.resolver),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
@@ -27,4 +23,14 @@ func (s *Service) Discovery() *grpc.ClientConn {
 	}
 
 	return conn
+}
+
+func (s *Service) etcdResolver() {
+	if s.resolver == nil {
+		builder, resolverErr := resolver.NewBuilder(s.client)
+		if resolverErr != nil {
+			log.Fatal(resolverErr)
+		}
+		s.resolver = &builder
+	}
 }
