@@ -1,14 +1,12 @@
 package main_test
 
 import (
+	"by/video/rpc"
 	"by/video/service/video"
 	"context"
 	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/naming/endpoints"
-	"go.etcd.io/etcd/client/v3/naming/resolver"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"testing"
 	"time"
 )
@@ -62,33 +60,15 @@ func TestReg(t *testing.T) {
 }
 
 func TestDis(t *testing.T) {
-	// 创建连接
-	etcd, etcdErr := clientv3.NewFromURL("http://127.0.0.1:12379")
-	if etcdErr != nil {
-		t.Error(etcdErr)
-	}
-	// 服务发现
-	builder, resolverErr := resolver.NewBuilder(etcd)
-	if resolverErr != nil {
-		t.Error(resolverErr)
-	}
-	target := fmt.Sprintf("etcd:///%s", video.Video_ServiceDesc.ServiceName)
-	conn, dialErr := grpc.Dial(
-		target,
-		grpc.WithResolvers(builder),
-		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if dialErr != nil {
-		t.Error(dialErr)
-	}
-	req := &video.PushRequest{Title: "banana", Comment: "banana"}
+	service := rpc.NewService([]string{"127.0.0.1:12379"}, rpc.WithServiceDesc(video.Video_ServiceDesc))
+	conn := service.Discovery()
 
+	req := &video.PushRequest{Title: "banana", Comment: "banana"}
+	grpcClient := video.NewVideoClient(conn)
+	ctx := context.Background()
 	for {
 		select {
 		case <-time.After(time.Second):
-			grpcClient := video.NewVideoClient(conn)
-			ctx := context.Background()
 			response, callErr := grpcClient.Push(ctx, req)
 			if callErr != nil {
 				t.Error(callErr)

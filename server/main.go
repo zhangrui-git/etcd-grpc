@@ -2,32 +2,32 @@ package main
 
 import (
 	"by/video/logic"
-	"by/video/register"
+	"by/video/rpc"
 	"by/video/service/video"
 	"flag"
-	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 )
 
 func main() {
-	host := flag.String("host", "127.0.0.1", "listen ip")
-	port := flag.String("port", "80", "listen port")
-	etcd := flag.String("etcd", "127.0.0.1:2379", "etcd addr, ip:port")
+	listen := flag.String("listen", "127.0.0.1:80", "listen addr, ip:port")
+	etcd := flag.String("etcd", "127.0.0.1:2379", "etcd addr, host:port")
 	flag.Parse()
-	serverAddr := fmt.Sprintf("%s:%s", *host, *port)
-	etcdAddr := fmt.Sprintf("%s", *etcd)
-	fmt.Println(serverAddr)
-	fmt.Println(etcdAddr)
 
-	svc := register.NewService([]string{etcdAddr}, serverAddr, video.Video_ServiceDesc, 3, 2)
+	svc := rpc.NewService(
+		[]string{*etcd},
+		rpc.WithServiceAddr(*listen),
+		rpc.WithServiceDesc(video.Video_ServiceDesc),
+		rpc.WithTTL(3),
+		rpc.WithKeepalive(2),
+	)
 	go svc.Register()
 
 	grpcServer := grpc.NewServer()
 	video.RegisterVideoServer(grpcServer, logic.VideoService{})
 
-	listener, listenErr := net.Listen("tcp", serverAddr)
+	listener, listenErr := net.Listen("tcp", *listen)
 	if listenErr != nil {
 		log.Fatal("监听失败", listenErr)
 	} else {
