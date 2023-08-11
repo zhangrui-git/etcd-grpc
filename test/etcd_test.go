@@ -77,3 +77,20 @@ func TestDis(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkDis(b *testing.B) {
+	println(b.N)
+	service := rpc.NewService([]string{"127.0.0.1:12379"}, rpc.WithServiceDesc(&video.Video_ServiceDesc))
+	conn := service.Discovery()
+
+	req := &video.PushRequest{Title: "banana", Comment: "banana"}
+	grpcClient := video.NewVideoClient(conn)
+	ctx := context.Background()
+	for i := 0; i < b.N; i++ {
+		response, callErr := grpcClient.Push(ctx, req)
+		if callErr != nil {
+			b.Error(callErr)
+		}
+		fmt.Println(response)
+	}
+}
